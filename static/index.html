@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>grok build</title>
+  <link rel="icon" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/app.css?v=4">
+</head>
+<body data-view="chat">
+  <div class="app">
+    <aside class="nav">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/>
+          </svg>
+        </span>
+        <div class="brand-name">grok build</div>
+      </div>
+      <button id="newChat" class="primary" type="button">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.4v11.2M2.4 8h11.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span>新对话</span>
+      </button>
+      <div class="modes" role="tablist">
+        <button type="button" data-view="chat" class="active" role="tab">对话</button>
+        <button type="button" data-view="files" role="tab">文件</button>
+        <button type="button" data-view="term" role="tab">终端</button>
+      </div>
+      <div class="session-label">对话</div>
+      <div id="sessionList" class="sessions"></div>
+      <button id="openSettings" class="ghost" type="button">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 4.5h11.6M2.2 8h11.6M2.2 11.5h11.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="5.6" cy="4.5" r="1.35" fill="currentColor"/><circle cx="10.6" cy="8" r="1.35" fill="currentColor"/><circle cx="7.2" cy="11.5" r="1.35" fill="currentColor"/></svg>
+        <span>设置</span>
+      </button>
+    </aside>
+
+    <main class="main">
+      <header class="top">
+        <div class="heading">
+          <button id="chatTitle" class="title" type="button" title="重命名">新对话</button>
+          <button id="cwdBtn" class="cwd" type="button" title="点击更换当前对话的目录"></button>
+        </div>
+        <div id="status" class="status"><i></i><span>就绪</span></div>
+      </header>
+
+      <section id="viewChat" class="view">
+        <div id="banner" class="banner" hidden></div>
+        <div id="transcript" class="transcript"></div>
+        <form id="composer" class="composer">
+          <div id="quick" class="quick"></div>
+          <div id="attachRow" class="attach-row" hidden></div>
+          <textarea id="input" rows="1" placeholder="描述要完成的事。可以直接粘贴图片。Enter 发送，Shift+Enter 换行"></textarea>
+          <div class="composer-bar">
+            <button id="uploadBtn" class="upload" type="button">上传文件</button>
+            <input id="filePick" type="file" multiple hidden>
+            <span id="modeBadge" class="badge"></span>
+            <span id="hint" class="hint">Enter 发送</span>
+            <div class="actions">
+              <button id="stopBtn" class="stop" type="button" hidden>停止</button>
+              <button id="sendBtn" class="send" type="submit">发送</button>
+            </div>
+          </div>
+        </form>
+      </section>
+
+      <section id="viewFiles" class="view" hidden>
+        <div class="files">
+          <div id="crumbs" class="crumbs"></div>
+          <div class="file-grid">
+            <div id="fileList" class="file-list"></div>
+            <div id="preview" class="preview">
+              <p class="muted">选择一个文件，可以预览，也可以把路径放进对话。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="viewTerm" class="view" hidden>
+        <div class="term">
+          <div class="term-bar">
+            <span id="termCwd"></span>
+            <button id="termClear" type="button">清空</button>
+          </div>
+          <pre id="termOut"></pre>
+          <form id="termForm" class="term-form">
+            <span>PS</span>
+            <input id="termInput" autocomplete="off" spellcheck="false" placeholder="在当前目录运行 PowerShell">
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <aside class="rail">
+      <div class="rail-head">本次活动</div>
+      <div id="plan" class="plan" hidden></div>
+      <div id="activity" class="activity"></div>
+    </aside>
+  </div>
+
+  <div id="settings" class="modal" hidden>
+    <form id="settingsForm" class="sheet">
+      <div class="sheet-head">
+        <h2>设置</h2>
+        <button type="button" id="closeSettings" class="icon-btn" aria-label="关闭">×</button>
+      </div>
+      <label>模型
+        <select id="setModel"></select>
+      </label>
+      <label>思考深度
+        <select id="setEffort"></select>
+      </label>
+      <fieldset>
+        <legend>能力</legend>
+        <label class="choice"><input type="radio" name="permission" value="full"> 完整能力，自动执行工具</label>
+        <label class="choice"><input type="radio" name="permission" value="read"> 只读，不改文件、不跑命令</label>
+      </fieldset>
+      <label>新对话的默认目录
+        <div class="row">
+          <input id="setWorkspace" type="text" spellcheck="false" autocomplete="off">
+          <button id="pickWorkspace" type="button">更换</button>
+        </div>
+      </label>
+      <label>Grok 程序
+        <input id="setGrok" type="text" spellcheck="false">
+      </label>
+      <p id="grokState" class="note"></p>
+      <div class="sheet-actions">
+        <button id="shutdownBtn" class="danger" type="button">退出 grok build</button>
+        <button class="send" type="submit">保存</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="cwdDialog" class="modal" hidden>
+    <form id="cwdForm" class="sheet">
+      <div class="sheet-head">
+        <h2>更换目录</h2>
+        <button type="button" id="closeCwd" class="icon-btn" aria-label="关闭">×</button>
+      </div>
+      <label>完整路径
+        <input id="cwdInput" type="text" spellcheck="false" autocomplete="off">
+      </label>
+      <label class="choice"><input id="cwdDefault" type="checkbox" checked> 同时设为新对话的默认目录</label>
+      <p id="cwdError" class="note"></p>
+      <div class="sheet-actions">
+        <button id="cwdBrowse" type="button">浏览</button>
+        <button class="send" type="submit">使用这个目录</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/static/app.js?v=5"></script>
+</body>
+</html>
